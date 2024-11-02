@@ -46,7 +46,9 @@ object IO {
   val temporaryDirectory = new File(System.getProperty("java.io.tmpdir"))
 
   /** The size of the byte or char buffer used in various methods. */
-  private val BufferSize = 8192
+  private val BufferSize = Option(System.getProperty("sbt.io.buffer.size")).map(_.toInt).getOrElse(8192)
+
+  private val StoreFileEntry = Option(System.getProperty("sbt.io.zip.store")).exists(_.toBoolean)
 
   /** File scheme name */
   private[sbt] val FileScheme = "file"
@@ -711,6 +713,7 @@ object IO {
       //			log.debug("\tAdding " + file + " as " + name + " ...")
       val e = createEntry(name)
       e setTime time.getOrElse(getModifiedTimeOrZero(file))
+      if (StoreFileEntry) e setMethod ZipEntry.STORED
       e
     }
     def addFileEntry(file: File, name: String) = {
